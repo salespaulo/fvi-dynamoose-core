@@ -1,0 +1,59 @@
+{
+    "name": "fvi-dynamoose-core",
+    "version": "0.0.0",
+    "description": "FVI - Dynamoose Core",
+    "main": "app/index.js",
+    "prettier": "fvi-prettier-config",
+    "scripts": {
+        "compile": "grunt compile",
+        "test": "grunt test",
+        "debug-test": "grunt debug-test",
+        "dev": "grunt dev",
+        "debug-dev": "grunt debug-dev",
+        "prod": "grunt prod",
+        "release": "grunt version && grunt release",
+        "release:minor": "grunt version:minor && grunt release:minor",
+        "release:major": "grunt version:major && grunt release:major",
+        "release:finish": "grunt release:finish",
+        "coverage": "npx nyc@latest npm run test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/salespaulo/fvi-dynamoose-core.git"
+    },
+    "keywords": [
+        "dyanamoose",
+        "dynamo",
+        "services",
+        "crud"
+    ],
+    "author": "FVI",
+    "license": "MIT",
+    "homepage": "git+https://github.com/salespaulo/fvi-dynamoose-core.git#README.md",
+    "dependencies": {
+        "fastest-validator": "^1.0.2",
+        "fvi-dynamoose-utils": "^0.0.1",
+        "fvi-node-utils": "^0.0.1"
+    },
+    "devDependencies": {
+        "uuid": "7.0.2",
+        "chai": "^4.2.0",
+        "chai-http": "^4.3.0",
+        "grunt": "^1.0.4",
+        "grunt-apidoc": "^0.11.0",
+        "grunt-concurrent": "^3.0.0",
+        "grunt-contrib-clean": "^2.0.0",
+        "grunt-contrib-compress": "^1.6.0",
+        "grunt-contrib-watch": "^1.1.0",
+        "grunt-env": "^1.0.1",
+        "grunt-mocha-test": "^0.13.3",
+        "grunt-nodemon": "^0.4.2",
+        "grunt-notify": "^0.4.5",
+        "grunt-shell": "^3.0.1",
+        "fvi-koa-server": "^0.0.1",
+        "fvi-prettier-config": "^0.0.1",
+        "load-grunt-tasks": "^5.0.1",
+        "fvi-dynamoose-repository": "^0.0.1",
+        "mocha": "^7.1.0"
+    }
+}
