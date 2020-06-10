@@ -16,6 +16,7 @@ describe('Testing Dynamoose Core', () => {
             tenantId: rangeKeyString(),
         })
     })
+
     after(() => repo.close())
 
     it('Testing Init - OK', done => {
@@ -33,12 +34,12 @@ describe('Testing Dynamoose Core', () => {
     })
     it('Testing app methods - OK', done => {
         const instance = app(repo.get('model1'))
-        chai.assert.exists(instance.hashWithRangeService, 'instance.hashWithRangeService is null!')
-        chai.assert.exists(instance.hashLikeIdService, 'instance.hashLikeIdService is null!')
-        chai.assert.exists(instance.hashOnlyService, 'instance.hashOnlyService is null!')
+        chai.assert.exists(instance.hashWithRange, 'instance.hashWithRange is null!')
+        chai.assert.exists(instance.hashLikeId, 'instance.hashLikeId is null!')
+        chai.assert.exists(instance.hashOnly, 'instance.hashOnly is null!')
         chai.assert.exists(
-            instance.hashLikeIdRangeLikeTenantService,
-            'instance.hashLikeIdRangeLikeTenantService is null!'
+            instance.hashLikeIdRangeLikeTenant,
+            'instance.hashLikeIdRangeLikeTenant is null!'
         )
         done()
     })

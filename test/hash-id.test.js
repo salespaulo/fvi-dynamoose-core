@@ -33,9 +33,9 @@ describe('Testing hash-id services', () => {
     })
     after(() => repo.close())
 
-    it('Testing hashLikeIdService.create - OK', done => {
+    it('Testing hashLikeId.create - OK', done => {
         const instance = app(repo.get(MODEL_NAME))
-        instance.hashLikeIdService
+        instance.hashLikeId
             .create({ id, prop1: 'prop1', prop2: 'prop2', unknown: 'here' })
             .then(res => {
                 testMutations(id, res, 201)
@@ -43,9 +43,9 @@ describe('Testing hash-id services', () => {
             })
             .catch(done)
     })
-    it('Testing hashLikeIdService.update - OK', done => {
+    it('Testing hashLikeId.update - OK', done => {
         const instance = app(repo.get(MODEL_NAME))
-        instance.hashLikeIdService
+        instance.hashLikeId
             .update(id, { prop1: 'xxx', prop2: 'prop2' })
             .then(res => {
                 testMutations(id, res, 200)
@@ -53,9 +53,9 @@ describe('Testing hash-id services', () => {
             })
             .catch(done)
     })
-    it('Testing hashLikeIdService.queryByHashKey - OK', done => {
+    it('Testing hashLikeId.queryByHashKey - OK', done => {
         const instance = app(repo.get(MODEL_NAME))
-        instance.hashLikeIdService
+        instance.hashLikeId
             .queryById(id)
             .then(res => {
                 testQueries(id, res, 200)
@@ -64,9 +64,9 @@ describe('Testing hash-id services', () => {
             .catch(done)
     })
 
-    it('Testing hashLikeIdService.delete - OK', done => {
+    it('Testing hashLikeId.delete - OK', done => {
         const instance = app(repo.get(MODEL_NAME))
-        instance.hashLikeIdService
+        instance.hashLikeId
             .delete(id)
             .then(res => {
                 testMutations(id, res, 200)

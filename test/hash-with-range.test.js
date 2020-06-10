@@ -33,9 +33,9 @@ describe('Testing hash-with-range services', () => {
     })
     after(() => repo.close())
 
-    it('Testing hashWithRangeService.create - OK', done => {
+    it('Testing hashWithRange.create - OK', done => {
         const instance = app(repo.get('model1'))
-        instance.hashWithRangeService
+        instance.hashWithRange
             .create(
                 { id },
                 { tenantId: 'tenantId' },
@@ -47,9 +47,9 @@ describe('Testing hash-with-range services', () => {
             })
             .catch(done)
     })
-    it('Testing hashWithRangeService.update - OK', done => {
+    it('Testing hashWithRange.update - OK', done => {
         const instance = app(repo.get('model1'))
-        instance.hashWithRangeService
+        instance.hashWithRange
             .update({ id }, { tenantId: 'tenantId' }, { prop1: 'xxx', prop2: 'prop2' })
             .then(res => {
                 testMutations(id, res, 200)
@@ -57,9 +57,9 @@ describe('Testing hash-with-range services', () => {
             })
             .catch(done)
     })
-    it('Testing hashWithRangeService.queryByHashKey - OK', done => {
+    it('Testing hashWithRange.queryByHashKey - OK', done => {
         const instance = app(repo.get('model1'))
-        instance.hashWithRangeService
+        instance.hashWithRange
             .queryByHashKey({ id }, { tenantId: 'tenantId' })
             .then(res => {
                 testQueries(id, res, 200)
@@ -67,9 +67,9 @@ describe('Testing hash-with-range services', () => {
             })
             .catch(done)
     })
-    it('Testing hashWithRangeService.query - OK', done => {
+    it('Testing hashWithRange.query - OK', done => {
         const instance = app(repo.get('model1'))
-        instance.hashWithRangeService
+        instance.hashWithRange
             .query({ tenantId: 'tenantId' })
             .then(res => {
                 testQueries(id, res, 200)
@@ -77,9 +77,9 @@ describe('Testing hash-with-range services', () => {
             })
             .catch(done)
     })
-    it('Testing hashWithRangeService.delete - OK', done => {
+    it('Testing hashWithRange.delete - OK', done => {
         const instance = app(repo.get('model1'))
-        instance.hashWithRangeService
+        instance.hashWithRange
             .delete({ id }, { tenantId: 'tenantId' })
             .then(res => {
                 testMutations(id, res, 200)

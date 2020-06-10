@@ -176,10 +176,10 @@ const deleteByIdFactory = (logPrefix, model) => async id => {
     }
 }
 
-const hashOnlyService = require('../hash-only')
+const hashOnly = require('../hash-only')
 
 module.exports = model => {
-    const service = hashOnlyService(model)
+    const service = hashOnly(model)
     const logPrefix = `${model.name}`
 
     return {

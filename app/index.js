@@ -8,9 +8,9 @@ const hashIdRangeTenantFactory = require('./hash-id-range-tenant')
 
 module.exports = model => {
     return {
-        hashOnlyService: hashOnlyFactory(model),
-        hashWithRangeService: hashWithRangeFactory(model),
-        hashLikeIdService: hashIdFactory(model),
-        hashLikeIdRangeLikeTenantService: hashIdRangeTenantFactory(model),
+        hashOnly: hashOnlyFactory(model),
+        hashWithRange: hashWithRangeFactory(model),
+        hashLikeId: hashIdFactory(model),
+        hashLikeIdRangeLikeTenant: hashIdRangeTenantFactory(model),
     }
 }

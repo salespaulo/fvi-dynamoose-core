@@ -17,7 +17,7 @@ const MODEL_NAME = 'model3'
 describe('Testing hash-id-range-tenant services', () => {
     let id = null
     let repo = null
-    let hashLikeIdRangeLikeTenantService = null
+    let hashLikeIdRangeLikeTenant = null
 
     before(() => {
         id = uuid.v4()
@@ -34,12 +34,12 @@ describe('Testing hash-id-range-tenant services', () => {
             { waitForActive: true }
         )
         const instance = app(repo.get(MODEL_NAME))
-        hashLikeIdRangeLikeTenantService = instance.hashLikeIdRangeLikeTenantService('tenantId')
+        hashLikeIdRangeLikeTenant = instance.hashLikeIdRangeLikeTenant('tenantId')
     })
     after(() => repo.close())
 
-    it('Testing hashLikeIdRangeLikeTenantService.create - OK', done => {
-        hashLikeIdRangeLikeTenantService
+    it('Testing hashLikeIdRangeLikeTenant.create - OK', done => {
+        hashLikeIdRangeLikeTenant
             .create({ id, prop1: 'prop1', prop2: 'prop2', unknown: 'here' })
             .then(res => {
                 testMutations(id, res, 201)
@@ -47,8 +47,8 @@ describe('Testing hash-id-range-tenant services', () => {
             })
             .catch(done)
     })
-    it('Testing hashLikeIdRangeLikeTenantService.update - OK', done => {
-        hashLikeIdRangeLikeTenantService
+    it('Testing hashLikeIdRangeLikeTenant.update - OK', done => {
+        hashLikeIdRangeLikeTenant
             .update(id, { prop1: 'xxx', prop2: 'prop2' })
             .then(res => {
                 testMutations(id, res, 200)
@@ -56,8 +56,8 @@ describe('Testing hash-id-range-tenant services', () => {
             })
             .catch(done)
     })
-    it('Testing hashLikeIdRangeLikeTenantService.queryByHashKey - OK', done => {
-        hashLikeIdRangeLikeTenantService
+    it('Testing hashLikeIdRangeLikeTenant.queryByHashKey - OK', done => {
+        hashLikeIdRangeLikeTenant
             .queryById(id)
             .then(res => {
                 testQueries(id, res, 200)
@@ -65,8 +65,8 @@ describe('Testing hash-id-range-tenant services', () => {
             })
             .catch(done)
     })
-    it('Testing hashLikeIdRangeLikeTenantService.query - OK', done => {
-        hashLikeIdRangeLikeTenantService
+    it('Testing hashLikeIdRangeLikeTenant.query - OK', done => {
+        hashLikeIdRangeLikeTenant
             .query()
             .then(res => {
                 testQueries(id, res, 200)
@@ -74,8 +74,8 @@ describe('Testing hash-id-range-tenant services', () => {
             })
             .catch(done)
     })
-    it('Testing hashLikeIdRangeLikeTenantService.delete - OK', done => {
-        hashLikeIdRangeLikeTenantService
+    it('Testing hashLikeIdRangeLikeTenant.delete - OK', done => {
+        hashLikeIdRangeLikeTenant
             .delete(id)
             .then(res => {
                 testMutations(id, res, 200)

@@ -32,9 +32,9 @@ describe('Testing hash-only services', () => {
     })
     after(() => repo.close())
 
-    it('Testing hashOnlyService.create - OK', done => {
+    it('Testing hashOnly.create - OK', done => {
         const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnlyService
+        instance.hashOnly
             .create({ id, prop1: 'prop1', prop2: 'prop2', unknown: 'here' })
             .then(res => {
                 testMutations(id, res, 201)
@@ -42,9 +42,9 @@ describe('Testing hash-only services', () => {
             })
             .catch(done)
     })
-    it('Testing hashOnlyService.update - OK', done => {
+    it('Testing hashOnly.update - OK', done => {
         const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnlyService
+        instance.hashOnly
             .update({ id }, { prop1: 'xxx', prop2: 'prop2' })
             .then(res => {
                 testMutations(id, res, 200)
@@ -52,9 +52,9 @@ describe('Testing hash-only services', () => {
             })
             .catch(done)
     })
-    it('Testing hashOnlyService.queryByHashKey - OK', done => {
+    it('Testing hashOnly.queryByHashKey - OK', done => {
         const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnlyService
+        instance.hashOnly
             .query()
             .then(res => {
                 testQueries(id, res, 200)
@@ -62,9 +62,9 @@ describe('Testing hash-only services', () => {
             })
             .catch(done)
     })
-    it('Testing hashOnlyService.queryByHashKey - OK', done => {
+    it('Testing hashOnly.queryByHashKey - OK', done => {
         const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnlyService
+        instance.hashOnly
             .queryByHashKey({ id })
             .then(res => {
                 testQueries(id, res, 200)
@@ -73,9 +73,9 @@ describe('Testing hash-only services', () => {
             .catch(done)
     })
 
-    it('Testing hashOnlyService.delete - OK', done => {
+    it('Testing hashOnly.delete - OK', done => {
         const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnlyService
+        instance.hashOnly
             .delete({ id })
             .then(res => {
                 testMutations(id, res, 200)

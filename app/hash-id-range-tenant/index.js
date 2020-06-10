@@ -1,9 +1,9 @@
 'use strict'
 
-const hashWithRangeServiceFactory = require('../hash-with-range')
+const hashWithRangeFactory = require('../hash-with-range')
 
 module.exports = model => tenantId => {
-    const service = hashWithRangeServiceFactory(model)
+    const service = hashWithRangeFactory(model)
 
     return {
         create: obj => service.create({ id: obj.id }, { tenantId }, obj),

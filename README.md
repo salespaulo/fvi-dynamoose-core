@@ -53,7 +53,7 @@ const app = require('fvi-dynamoose-core')
 // Passing Dynamoose.Model Object
 const services = app(model)
 
-services.['hashWithRangeService'|'hashLikeIdService'|'hashLikeIdRangeLikeTenantService']
+services.['hashWithRange'|'hashLikeId'|'hashLikeIdRangeLikeTenant']
     .['create'|'update'|'query'|'queryByHashKey'|'queryById'|'delete']
     (
         {...params}
@@ -68,7 +68,7 @@ services.['hashWithRangeService'|'hashLikeIdService'|'hashLikeIdRangeLikeTenantS
 
 Neste serviço podemos ter um _CRUD_ onde a tabela _dynamodb_ sendo tratada terá em seu schema um [HashKey](https://dynamoosejs.com/api/schema/) configurado. Seguem métodos disponívels:
 
-> `services.hashOnlyService
+> `services.hashOnly
 
 -   `.create(hash: Object, obj: Object)`: Cria um novo registro passando o `hash` em um _Object_, e.g. `{ id: 'value' }` e o _Object_ completo com as propriedades.
 -   `.update(hash: Object, obj: Object)`: Atualiza um registro passando o `hash` como um _Object_, e.g. `{ id: 'value' }`, e o _Object_ completo com todas as propriedades.
@@ -82,7 +82,7 @@ Neste serviço podemos ter um _CRUD_ onde a tabela _dynamodb_ sendo tratada ter�
 
 Neste serviço podemos ter um _CRUD_ onde a tabela _dynamodb_ sendo tratada terá em seu schema um [HashKey](https://dynamoosejs.com/api/schema/) e um [RangeKey](https://dynamoosejs.com/api/schema/) configurados. Estão disponíveis os seguintes métodos:
 
-> `services.hashWithRangeService`
+> `services.hashWithRange`
 
 -   `.create(hash: Object, range: Object, obj: Object)`: Cria um novo registro passando o `hash` como um _Object_, e.g. `{ id: 'value' }`, o range, e.g. `{ status: 'value' }` e o _Object_ completo com todas as propriedades.
 -   `.update(hash: Object, range: Object, obj: Object)`: Atualiza um registro passando o `hash` como um _Object_, e.g. `{ id: 'value' }`, o range, e.g. `{ status: 'value' }` e o _Object_ completo com todas as propriedades.
@@ -96,7 +96,7 @@ Neste serviço podemos ter um _CRUD_ onde a tabela _dynamodb_ sendo tratada ter�
 
 Neste serviço podemos ter um _CRUD_ onde a tabela _dynamodb_ sendo tratada terá em seu schema um [HashKey](https://dynamoosejs.com/api/schema/) já configurado como a propriedade `id`. Estão disponíveis os seguintes métodos:
 
-> `services.hashLikeIdService`
+> `services.hashLikeId`
 
 -   `.create(obj: Object)`: Cria um novo registro passando um _Object_, e.g. `{ id: 'value', prop1: 'value', etc: 'etc...' }`.
 -   `.update(id: String, obj: Object)`: Atualiza um registro passando o `id` como uma _String_, e.g. `'value'`, e o _Object_ completo com todas as propriedades.
@@ -115,16 +115,16 @@ Neste serviço temos a necessidade de chamar ele passado o valor do `tenantId` p
 ```javascript
 const services = app(model)
 
-const tenant1 = service.hashLikeIdRangeLikeTenantService('tenant-1')
+const tenant1 = service.hashLikeIdRangeLikeTenant('tenant-1')
 
 tenant1.update('id-value', { prop1: 'xxx' }) // then().catch()
 
-const tenant2 = service.hashLikeIdRangeLikeTenantService('tenant-1')
+const tenant2 = service.hashLikeIdRangeLikeTenant('tenant-1')
 
 tenant2.create({ id: 'id-value', prop2: 'yyy' }) // then().catch()
 ```
 
-> `services.hashLikeIdRangeLikeTenantService('tenant-id')`
+> `services.hashLikeIdRangeLikeTenant('tenant-id')`
 
 -   `.create(obj: Object)`: Cria um novo registro passando um _Object_, e.g. `{ id: 'value', prop: 'xxx' }`.
 -   `.update(id: String, obj: Object)`: Atualiza um registro passando o `id` como uma _String_, e.g. `'value'` e o _Object_ completo com todas as propriedades.
