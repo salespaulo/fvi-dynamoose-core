@@ -1,6 +1,6 @@
 {
     "name": "fvi-dynamoose-core",
-    "version": "0.0.0",
+    "version": "0.0.1",
     "description": "FVI - Dynamoose Core",
     "main": "app/index.js",
     "prettier": "fvi-prettier-config",
