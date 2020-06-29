@@ -1,6 +1,6 @@
 {
     "name": "fvi-dynamoose-core",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "FVI - Dynamoose Core",
     "main": "app/index.js",
     "prettier": "fvi-prettier-config",
@@ -31,8 +31,6 @@
     "license": "MIT",
     "homepage": "git+https://github.com/salespaulo/fvi-dynamoose-core.git#README.md",
     "dependencies": {
-        "fastest-validator": "^1.0.2",
-        "fvi-dynamoose-utils": "^0.0.1",
         "fvi-node-utils": "^0.0.1"
     },
     "devDependencies": {
@@ -53,7 +51,8 @@
         "fvi-koa-server": "^0.0.1",
         "fvi-prettier-config": "^0.0.1",
         "load-grunt-tasks": "^5.0.1",
-        "fvi-dynamoose-repository": "^0.0.1",
+        "fvi-dynamoose-utils": "^0.0.2",
+        "fvi-dynamoose-repository": "^0.0.2",
         "mocha": "^7.1.0"
     }
 }

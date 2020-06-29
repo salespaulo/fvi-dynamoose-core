@@ -2,24 +2,19 @@
 
 const uuid = require('uuid')
 const repository = require('fvi-dynamoose-repository')
-const {
-    hashKeyString,
-    requiredString,
-    optionalString,
-} = require('fvi-dynamoose-utils')
+const { hashKeyString, requiredString, optionalString } = require('fvi-dynamoose-utils')
 
-const app = require('../app')
-const { testQueries, testMutations } = require('./utils')
+const { hashIdFactory } = require('../app')
+const { testQueryOne, testMutations } = require('./utils')
 
 const MODEL_NAME = 'model2'
 
 describe('Testing hash-id services', () => {
     let id = null
-    let repo = null
+    let instance = null
 
     before(() => {
-        id = uuid.v4()
-        repo = repository()
+        const repo = repository()
         repo.map(
             MODEL_NAME,
             {
@@ -30,46 +25,47 @@ describe('Testing hash-id services', () => {
             { saveUnknown: true },
             { waitForActive: true }
         )
-    })
-    after(() => repo.close())
 
-    it('Testing hashLikeId.create - OK', done => {
-        const instance = app(repo.get(MODEL_NAME))
-        instance.hashLikeId
+        id = uuid.v4()
+        const model = repo.get(MODEL_NAME)
+        instance = hashIdFactory(model)
+    })
+
+    it('Testing create - OK', done => {
+        instance
             .create({ id, prop1: 'prop1', prop2: 'prop2', unknown: 'here' })
             .then(res => {
-                testMutations(id, res, 201)
-                done()
-            })
-            .catch(done)
-    })
-    it('Testing hashLikeId.update - OK', done => {
-        const instance = app(repo.get(MODEL_NAME))
-        instance.hashLikeId
-            .update(id, { prop1: 'xxx', prop2: 'prop2' })
-            .then(res => {
-                testMutations(id, res, 200)
-                done()
-            })
-            .catch(done)
-    })
-    it('Testing hashLikeId.queryByHashKey - OK', done => {
-        const instance = app(repo.get(MODEL_NAME))
-        instance.hashLikeId
-            .queryById(id)
-            .then(res => {
-                testQueries(id, res, 200)
+                testMutations(id, res)
                 done()
             })
             .catch(done)
     })
 
-    it('Testing hashLikeId.delete - OK', done => {
-        const instance = app(repo.get(MODEL_NAME))
-        instance.hashLikeId
+    it('Testing update - OK', done => {
+        instance
+            .update(id, { prop1: 'xxx', prop2: 'prop2' })
+            .then(res => {
+                testMutations(id, res)
+                done()
+            })
+            .catch(done)
+    })
+
+    it('Testing queryOne - OK', done => {
+        instance
+            .queryOne(id)
+            .then(res => {
+                testQueryOne(id, res)
+                done()
+            })
+            .catch(done)
+    })
+
+    it('Testing delete - OK', done => {
+        instance
             .delete(id)
             .then(res => {
-                testMutations(id, res, 200)
+                testMutations(id, res)
                 done()
             })
             .catch(done)

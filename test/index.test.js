@@ -6,41 +6,36 @@ const { hashKeyString, rangeKeyString } = require('fvi-dynamoose-utils')
 
 const app = require('../app')
 
-describe('Testing Dynamoose Core', () => {
-    let repo = null
+const MODEL_NAME = 'model1'
 
-    before(() => {
-        repo = repository()
-        repo.map('model1', {
-            id: hashKeyString(),
-            tenantId: rangeKeyString(),
-        })
-    })
-
-    after(() => repo.close())
-
+describe('Testing Dynamoose Services', () => {
     it('Testing Init - OK', done => {
-        const instance = app(repo.get('model1'))
-        chai.assert.exists(instance, 'instance is null!')
+        chai.assert.exists(app)
+        chai.assert.isObject(app)
+        chai.assert.isFunction(app.hashOnlyFactory)
+        chai.assert.isFunction(app.hashIdFactory)
+        chai.assert.isFunction(app.hashWithRangeFactory)
+        chai.assert.isFunction(app.hashIdRangeTenantFactory)
         done()
     })
-    it('Testing Init - FAIL', done => {
-        try {
-            app(null)
-            done('Should be throws an error!')
-        } catch (e) {
+
+    describe(`Testing create services`, () => {
+        let repo = null
+
+        before(() => {
+            repo = repository()
+            repo.map(MODEL_NAME, {
+                id: hashKeyString(),
+                tenantId: rangeKeyString(),
+            })
+        })
+
+        it(`Test creating services - OK`, done => {
+            app.hashOnlyFactory(repo.get(MODEL_NAME))
+            app.hashIdFactory(repo.get(MODEL_NAME))
+            app.hashWithRangeFactory(repo.get(MODEL_NAME))
+            app.hashIdRangeTenantFactory(repo.get(MODEL_NAME))('tenantId')
             done()
-        }
-    })
-    it('Testing app methods - OK', done => {
-        const instance = app(repo.get('model1'))
-        chai.assert.exists(instance.hashWithRange, 'instance.hashWithRange is null!')
-        chai.assert.exists(instance.hashLikeId, 'instance.hashLikeId is null!')
-        chai.assert.exists(instance.hashOnly, 'instance.hashOnly is null!')
-        chai.assert.exists(
-            instance.hashLikeIdRangeLikeTenant,
-            'instance.hashLikeIdRangeLikeTenant is null!'
-        )
-        done()
+        })
     })
 })

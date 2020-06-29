@@ -1,225 +1,152 @@
 'use strict'
 
-const Validator = require('fastest-validator')
-
 const { debug } = require('fvi-node-utils')
 const { inspect } = require('fvi-node-utils/app/objects')
-const { toDbLastKey, toLastKey } = require('fvi-dynamoose-utils')
 
-const validator = new Validator()
+const { withHashKey } = require('./schema')
+const { APP_PREFIX, newInvalidInputSchema, newNotFoundById, newAlreadyExists } = require('../utils')
 
-const validate = hashKey => {
-    const schema = {}
+const queryOneFactory = (debugPrefix, model) => async hashKey => {
+    debug.here(`${debugPrefix}[queryOne]: hashKey=${inspect(hashKey)}`)
 
-    const hashKeys = Object.keys(hashKey)
-    if (!hashKeys || hashKeys.length == 0) {
-        return {
-            type: 'required',
-            field: 'hashKey',
-            message: "The 'Hash Key' field is required!",
-        }
+    const checks = withHashKey.validate({ hashKey })
+
+    if (checks.error != null) {
+        throw newInvalidInputSchema(`${debugPrefix}[queryOne]`, checks.error)
     }
 
-    schema[hashKeys[0]] = {
-        type: 'string',
-        empty: false,
-    }
+    const data = await model.query.getOne(hashKey)
 
-    return validator.validate(hashKey, schema)
+    debug.here(`${debugPrefix}[queryOne]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`)
+    return data
 }
 
-const all = async (model, startKey, limit) => {
-    if (startKey && limit) {
-        const lastKey = toDbLastKey(startKey)
-        return await model.scan.all(lastKey, limit)
+const queryOneOrThrowFactory = (debugPrefix, model) => async hashKey => {
+    const data = await queryOneFactory(debugPrefix, model)(hashKey, rangeKey)
+
+    if (data == null) {
+        throw newNotFoundById(debugPrefix, model.name, hashKey)
     }
 
-    if (startKey) {
-        const lastKey = toDbLastKey(startKey)
-        return await model.scan.all(lastKey)
-    }
-
-    if (limit) {
-        return await model.scan.limit(limit).exec()
-    }
-
-    return await model.scan.from().exec()
+    return data
 }
 
-/**
- *
- * @param {*} logPrefix Prefixo do log, string.
- * @param {*} model Modelo para acessar o repositorio, object.
- * @param {*} startHashKey Objeto completo, exemplo, { id: '1234'} ou { nome: 'Ola' }.
- * @param {*} limit
- */
-const queryFactory = (logPrefix, model) => async (startHashKey = false, limit = false) => {
-    debug.here(`${logPrefix}[query]: startHashKey=${inspect(startHashKey)}`)
+const queryHashBeginsWithFactory = (debugPrefix, model) => async (hashKey, startAt, limit) => {
+    debug.here(`${debugPrefix}[queryHashBeginsWith]: hashKey=${inspect(hashKey)}`)
+    const checks = withHashKey.validate({ hashKey })
 
-    const data = await all(model, startHashKey, limit)
-    const returnStatus = 200
-
-    debug.here(`${logPrefix}[query]: startHashKey=${inspect(startHashKey)}; status=${returnStatus}`)
-    debug.here(`${logPrefix}[query]: startHashKey=${inspect(startHashKey)}; data=${inspect(data)}`)
-
-    return {
-        status: returnStatus,
-        data: {
-            LastKey: data.lastKey ? toLastKey(data.lastKey) : null,
-            Count: data.count,
-            Items: data,
-        },
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
     }
+
+    const field = Object.keys(hashKey)[0]
+    const value = Object.values(hashKey)[0]
+    const queryHashKey = model.scan.from(field).beginsWith(value)
+
+    if (startAt != null) {
+        queryHashKey.startAt(startAt)
+    }
+
+    if (limit != null) {
+        queryHashKey.limit(limit)
+    }
+
+    const data = await queryHashKey.exec()
+
+    debug.here(
+        `${debugPrefix}[queryHashBeginsWith]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`
+    )
+    return data
 }
 
-const queryByHashKeyFactory = (logPrefix, model) => async hashKey => {
-    debug.here(`${logPrefix}[queryByHashKey]: hashKey=${inspect(hashKey)}`)
+const queryHashContainsFactory = (debugPrefix, model) => async (hashKey, startAt, limit) => {
+    debug.here(`${debugPrefix}[queryHashContains]: hashKey=${inspect(hashKey)}`)
+    const checks = withHashKey.validate({ hashKey })
 
-    const checks = validate(hashKey)
-
-    if (checks.length) {
-        debug.here(
-            `${logPrefix}[queryByHashKey][ERROR]: hashKey=${inspect(hashKey)}; error=${inspect(
-                checks
-            )}`
-        )
-        return {
-            status: 400,
-            data: checks,
-        }
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
     }
 
-    const data = await model.get(hashKey)
-    const returnStatus = 200
+    const field = Object.keys(hashKey)[0]
+    const value = Object.values(hashKey)[0]
+    const queryHashKey = model.scan.from(field).contains(value)
 
-    debug.here(`${logPrefix}[queryByHashKey]: hashKey=${inspect(hashKey)}; status=${returnStatus}`)
-    debug.here(`${logPrefix}[queryByHashKey]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`)
-
-    if (!data) {
-        return {
-            status: 404,
-            data: {
-                type: 'not_found',
-                message: `${logPrefix}: Not Found hashKey=${hashKey};`,
-            },
-        }
+    if (startAt != null) {
+        queryHashKey.startAt(startAt)
     }
 
-    return {
-        status: returnStatus,
-        data: {
-            Count: 1,
-            Items: [data],
-        },
+    if (limit != null) {
+        queryHashKey.limit(limit)
     }
+
+    const data = await queryHashKey.exec()
+
+    debug.here(
+        `${debugPrefix}[queryHashContains]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`
+    )
+
+    return data
 }
 
-const createFactory = (logPrefix, model) => async (hashKey, obj) => {
-    debug.here(`${logPrefix}[create]: hashKey=${inspect(hashKey)};`)
-    debug.here(`${logPrefix}[create]: hashKey=${inspect(hashKey)}; obj=${inspect(obj)}`)
+const createFactory = (debugPrefix, model) => async (hashKey, obj) => {
+    debug.here(`${debugPrefix}[create]: hashKey=${inspect(hashKey)}; obj=${inspect(obj)}`)
+    const checks = withHashKey.validate({ hashKey })
 
-    const checks = validate(hashKey)
-
-    if (checks.length) {
-        debug.here(
-            `${logPrefix}[create][ERROR]: hashKey=${inspect(hashKey)}; error=${inspect(checks)}`
-        )
-        return {
-            status: 400,
-            data: checks,
-        }
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
     }
 
-    const exists = await model.get(hashKey)
+    const exists = await model.query.getOne(hashKey)
 
-    if (exists) {
-        return {
-            status: 400,
-            data: {
-                type: 'bad_request',
-                message: `${logPrefix}: Already Exists hashKey=${inspect(hashKey)}`,
-            },
-        }
+    if (exists != null) {
+        throw newAlreadyExists(debugPrefix, model.name, hashKey)
     }
 
     const data = await model.create({ ...hashKey, ...obj })
-    const returnStatus = 201
 
-    debug.here(`${logPrefix}[create]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`)
-    debug.here(`${logPrefix}[create]: hashKey=${inspect(hashKey)}; status=${returnStatus}`)
-
-    return {
-        status: returnStatus,
-        data,
-    }
+    debug.here(`${debugPrefix}[create]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`)
+    return data
 }
 
-const updateFactory = (logPrefix, model) => async (hashKey, obj) => {
-    debug.here(`${logPrefix}[update]: hashKey=${inspect(hashKey)} `)
-    debug.here(`${logPrefix}[update]: hashKey=${inspect(hashKey)}; obj=${inspect(obj)}`)
+const updateFactory = (debugPrefix, model) => async (hashKey, obj) => {
+    debug.here(`${debugPrefix}[update]: hashKey=${inspect(hashKey)}; obj=${inspect(obj)}`)
+    const checks = withHashKey.validate({ hashKey })
 
-    const checks = validate(hashKey)
-    // TODO paulosales: atributos auto-gerenciaveis (timestamp)
-    delete obj.updatedAt
-    delete obj.createdAt
-
-    if (checks.length) {
-        debug.here(
-            `${logPrefix}[update][ERROR]: hashKey=${inspect(hashKey)}; error=${inspect(checks)}`
-        )
-        return {
-            status: 400,
-            data: checks,
-        }
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
     }
 
     const data = await model.update(hashKey, obj)
-    const returnStatus = 200
 
-    debug.here(`${logPrefix}[update]: hashKey=${inspect(hashKey)}; status=${returnStatus}`)
-    debug.here(`${logPrefix}[update]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`)
+    debug.here(`${debugPrefix}[update]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`)
 
-    return {
-        status: returnStatus,
-        data,
-    }
+    return data
 }
 
-const deleteFactory = (logPrefix, model) => async hashKey => {
-    debug.here(`${logPrefix}[delete]: hashKey=${inspect(hashKey)}`)
+const deleteFactory = (debugPrefix, model) => async hashKey => {
+    debug.here(`${debugPrefix}[delete]: hashKey=${inspect(hashKey)}`)
+    const checks = withHashKey.validate({ hashKey })
 
-    const checks = validate(hashKey)
-
-    if (checks.length) {
-        debug.here(
-            `${logPrefix}[delete][ERROR]: hashKey=${inspect(hashKey)}; error=${inspect(checks)}`
-        )
-        return {
-            status: 400,
-            data: checks,
-        }
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
     }
 
     const data = await model.delete(hashKey)
-    const returnStatus = 200
 
-    debug.here(`${logPrefix}[delete]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`)
-    debug.here(`${logPrefix}[delete]: hashKey=${inspect(hashKey)}; status=${returnStatus}`)
-
-    return {
-        status: returnStatus,
-        data,
-    }
+    debug.here(`${debugPrefix}[delete]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`)
+    return data
 }
 
 module.exports = model => {
-    const logPrefix = `[${model.name}[service]`
+    const debugPrefix = `${APP_PREFIX}[hash-only][${model.name}]`
 
     return {
-        create: createFactory(logPrefix, model),
-        delete: deleteFactory(logPrefix, model),
-        update: updateFactory(logPrefix, model),
-        query: queryFactory(logPrefix, model),
-        queryByHashKey: queryByHashKeyFactory(logPrefix, model),
+        create: createFactory(debugPrefix, model),
+        delete: deleteFactory(debugPrefix, model),
+        update: updateFactory(debugPrefix, model),
+        queryOne: queryOneFactory(debugPrefix, model),
+        queryOneOrThrow: queryOneOrThrowFactory(debugPrefix, model),
+        queryHashContains: queryHashContainsFactory(debugPrefix, model),
+        queryHashBeginsWith: queryHashBeginsWithFactory(debugPrefix, model),
     }
 }

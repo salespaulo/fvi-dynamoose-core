@@ -1,84 +1,84 @@
 'use strict'
 
 const uuid = require('uuid')
+const chai = require('chai')
 const repository = require('fvi-dynamoose-repository')
-const {
-    hashKeyString,
-    requiredString,
-    optionalString,
-} = require('fvi-dynamoose-utils')
+const { hashKeyString, requiredString, optionalString } = require('fvi-dynamoose-utils')
 
-const app = require('../app')
-const { testQueries, testMutations } = require('./utils')
+const { hashOnlyFactory } = require('../app')
+const { testQueryOne, testMutations } = require('./utils')
 
 const MODEL_NAME = 'model4'
 
 describe('Testing hash-only services', () => {
     let id = null
-    let repo = null
+    let instance = null
 
     before(() => {
+        const repo = repository()
         id = uuid.v4()
-        repo = repository()
-        repo.map(
-            MODEL_NAME,
-            {
-                id: hashKeyString(),
-                prop1: requiredString(),
-                prop2: optionalString(),
-            },
-            { saveUnknown: true }
+        instance = hashOnlyFactory(
+            repo
+                .map(
+                    MODEL_NAME,
+                    {
+                        id: hashKeyString(),
+                        prop1: requiredString(),
+                        prop2: optionalString(),
+                    },
+                    { saveUnknown: true }
+                )
+                .get(MODEL_NAME)
         )
     })
-    after(() => repo.close())
 
-    it('Testing hashOnly.create - OK', done => {
-        const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnly
-            .create({ id, prop1: 'prop1', prop2: 'prop2', unknown: 'here' })
+    it('Testing create - OK', done => {
+        instance
+            .create({ id }, { id, prop1: 'prop1', prop2: 'prop2', unknown: 'here' })
             .then(res => {
-                testMutations(id, res, 201)
+                testMutations(id, res)
                 done()
             })
             .catch(done)
     })
-    it('Testing hashOnly.update - OK', done => {
-        const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnly
+
+    it('Testing create - Already Exists', done => {
+        instance
+            .create({ id }, { id, prop1: 'prop1', prop2: 'prop2', unknown: 'here' })
+            .then(res => {
+                done('Should be throws an error!')
+            })
+            .catch(e => {
+                chai.assert.isTrue(e.message.includes(`Already Exists`))
+                done()
+            })
+    })
+
+    it('Testing update - OK', done => {
+        instance
             .update({ id }, { prop1: 'xxx', prop2: 'prop2' })
             .then(res => {
-                testMutations(id, res, 200)
-                done()
-            })
-            .catch(done)
-    })
-    it('Testing hashOnly.queryByHashKey - OK', done => {
-        const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnly
-            .query()
-            .then(res => {
-                testQueries(id, res, 200)
-                done()
-            })
-            .catch(done)
-    })
-    it('Testing hashOnly.queryByHashKey - OK', done => {
-        const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnly
-            .queryByHashKey({ id })
-            .then(res => {
-                testQueries(id, res, 200)
+                testMutations(id, res)
                 done()
             })
             .catch(done)
     })
 
-    it('Testing hashOnly.delete - OK', done => {
-        const instance = app(repo.get(MODEL_NAME))
-        instance.hashOnly
+    it('Testing queryOne - OK', done => {
+        instance
+            .queryOne({ id })
+            .then(res => {
+                testQueryOne(id, res)
+                done()
+            })
+            .catch(done)
+    })
+
+    it('Testing delete - OK', done => {
+        instance
             .delete({ id })
             .then(res => {
-                testMutations(id, res, 200)
+                testMutations(id, res)
                 done()
             })
             .catch(done)
