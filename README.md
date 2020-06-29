@@ -18,9 +18,9 @@ Biblioteca que disponibiliza um serviços [CRUD](https://en.wikipedia.org/wiki/C
 
 ## Configuração
 
-A configuração é na verdade o _Model_ do _dynamoose_ que já possui os métodos necessários para a implementação dos serviçoes auxiliares de _CRUD_. Podemos considerar a utilização da lib [i-dynamoose-repository](https://console.aws.amazon.com/codesuite/codecommit/repositories/i-dynamoose-repository/browse?region=us-east-1) para mapear e retornar o _Model_ do dynamoose para uma instância _AWS DynamoDB_.
+A configuração é na verdade o _Model_ do _dynamoose_ que já possui os métodos necessários para a implementação dos serviçoes auxiliares de _CRUD_. Podemos considerar a utilização da lib [fvi-dynamoose-repository](https://console.aws.amazon.com/codesuite/codecommit/repositories/fvi-dynamoose-repository/browse?region=us-east-1) para mapear e retornar o _Model_ do dynamoose para uma instância _AWS DynamoDB_.
 
--   Exemplo utilizando a lib `i-dynamoose-repository`
+-   Exemplo utilizando a lib `fvi-dynamoose-repository`
 
 ```javascript
 const app = require('fvi-dynamoose-core')

@@ -1,307 +1,283 @@
 'use strict'
 
-const Validator = require('fastest-validator')
-
 const { debug } = require('fvi-node-utils')
 const { inspect } = require('fvi-node-utils/app/objects')
-const { toDbLastKey, toLastKey } = require('fvi-dynamoose-utils')
 
-const validator = new Validator()
+const hashOnly = require('../hash-only')
+const { withHashKey, withRangeKey, withHashAndRangeKey } = require('./schema')
+const { APP_PREFIX, newInvalidInputSchema, newNotFoundById, newAlreadyExists } = require('../utils')
 
-const validate = (hashKey, rangeKey) => {
-    const schema = {}
+const queryOneFactory = (debugPrefix, model) => async (hashKey, rangeKey) => {
+    debug.here(
+        `${debugPrefix}[queryOne]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(rangeKey)}`
+    )
+    const checks = withHashAndRangeKey.validate({ hashKey, rangeKey })
 
-    const hashKeys = Object.keys(hashKey)
-    if (!hashKeys || hashKeys.length == 0) {
-        return {
-            type: 'required',
-            field: 'hashKey',
-            message: "The 'Hash Key' field is required!",
-        }
+    if (checks.error != null) {
+        throw newInvalidInputSchema(`${debugPrefix}[queryOne]`, checks.error)
     }
 
-    schema[hashKeys[0]] = {
-        type: 'string',
-        empty: false,
-    }
+    const id = { ...hashKey, ...rangeKey }
+    const data = await model.query.getOne(id)
 
-    return validator.validate({ ...hashKey, ...rangeKey }, schema)
+    debug.here(`${debugPrefix}[queryOne]: hashKey=${inspect(id)}; data=${inspect(data)}`)
+    return data
 }
 
-const all = async (model, rangeKey, startKey, limit) => {
-    if (startKey && limit) {
-        const lastKey = toDbLastKey({ ...startKey, ...rangeKey })
-        return await model.scan.all(lastKey, limit)
+const queryOneOrThrowFactory = (debugPrefix, model) => async (hashKey, rangeKey) => {
+    const data = await queryOneFactory(debugPrefix, model)(hashKey, rangeKey)
+
+    if (data == null) {
+        throw newNotFoundById(debugPrefix, model.name, { hashKey, rangeKey })
     }
 
-    if (startKey) {
-        const lastKey = toDbLastKey({ ...startKey, ...rangeKey })
-        return await model.scan.all(lastKey)
-    }
-
-    const keys = Object.keys(rangeKey)
-    const key = keys[0]
-    const value = rangeKey[key]
-
-    if (limit) {
-        return await model.scan
-            .from(key)
-            .contains(value)
-            .limit(limit)
-            .exec()
-    }
-
-    return await model.scan
-        .from(key)
-        .contains(value)
-        .exec()
+    return data
 }
 
-/**
- *
- * @param {*} logPrefix Prefixo do log, string.
- * @param {*} model Modelo para acessar o repositorio, object.
- * @param {*} rangeKey Range Key dynamoose, object.
- * @param {*} startHashKey Objeto completo, exemplo, { id: '1234'} ou { nome: 'Ola' }.
- * @param {*} limit
- */
-const queryFactory = (logPrefix, model) => async (
+const queryHashKeyFactory = (debugPrefix, model) => async (hashKey, startAt, limit) => {
+    debug.here(`${debugPrefix}[queryHashKey]: hashKey=${inspect(hashKey)}`)
+    const checks = withHashKey.validate({ hashKey })
+
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
+    }
+
+    const field = Object.keys(hashKey)[0]
+    const value = Object.values(hashKey)[0]
+    const queryHashKey = model.query.from(field).eq(value)
+
+    if (startAt != null) {
+        queryHashKey.startAt(startAt)
+    }
+
+    if (limit != null) {
+        queryHashKey.limit(limit)
+    }
+
+    const data = await queryHashKey.exec()
+
+    debug.here(`${debugPrefix}[queryHashKey]: hashKey=${inspect(hashKey)}; data=${inspect(data)}`)
+    return data
+}
+
+const queryRangeKeyFactory = (debugPrefix, model) => async (rangeKey, startAt, limit) => {
+    debug.here(`${debugPrefix}[queryRangeKey]: rangeKey=${inspect(rangeKey)}`)
+    const checks = withRangeKey.validate({ rangeKey })
+
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
+    }
+
+    const field = Object.keys(rangeKey)[0]
+    const value = Object.values(rangeKey)[0]
+    const queryRangeKey = model.scan.from(field).eq(value)
+
+    if (startAt != null) {
+        queryRangeKey.startAt(startAt)
+    }
+
+    if (limit != null) {
+        queryRangeKey.limit(limit)
+    }
+
+    const data = await queryRangeKey.exec()
+
+    debug.here(`${debugPrefix}[queryRangeKey]: hashKey=${inspect(rangeKey)}; data=${inspect(data)}`)
+    return data
+}
+
+const queryRangeBeginsWithFactory = (debugPrefix, model) => async (rangeKey, startAt, limit) => {
+    debug.here(`${debugPrefix}[queryRangeBeginsWith]: rangeKey=${inspect(rangeKey)}`)
+    const checks = withRangeKey.validate({ rangeKey })
+
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
+    }
+
+    const field = Object.keys(rangeKey)[0]
+    const value = Object.values(rangeKey)[0]
+    const queryRangeKey = model.scan.from(field).beginsWith(value)
+
+    if (startAt != null) {
+        queryRangeKey.startAt(startAt)
+    }
+
+    if (limit != null) {
+        queryRangeKey.limit(limit)
+    }
+
+    const data = await queryRangeKey.exec()
+
+    debug.here(
+        `${debugPrefix}[queryRangeBeginsWith]: hashKey=${inspect(rangeKey)}; data=${inspect(data)}`
+    )
+    return data
+}
+
+const queryHashAndRangeBeginsWithFactory = (debugPrefix, model) => async (
+    hashKey,
     rangeKey,
-    startHashKey = false,
-    limit = false
+    startAt,
+    limit
 ) => {
     debug.here(
-        `${logPrefix}[Consultar]: rangeKey=${inspect(rangeKey)}; startHashKey=${inspect(
-            startHashKey
+        `${debugPrefix}[queryHashAndRangeBeginsWith]: hashKey=${inspect(
+            hashKey
+        )}; rangeKey=${inspect(rangeKey)}`
+    )
+    const checks = withHashAndRangeKey.validate({ hashKey, rangeKey })
+
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
+    }
+
+    const fieldHash = Object.keys(hashKey)[0]
+    const valueHash = Object.values(hashKey)[0]
+    const fieldRange = Object.keys(rangeKey)[0]
+    const valueRange = Object.values(rangeKey)[0]
+    const queryRangeKey = model.query
+        .from(fieldHash)
+        .eq(valueHash)
+        .filter(fieldRange)
+        .beginsWith(valueRange)
+
+    if (startAt != null) {
+        queryRangeKey.startAt(startAt)
+    }
+
+    if (limit != null) {
+        queryRangeKey.limit(limit)
+    }
+
+    const data = await queryRangeKey.exec()
+
+    debug.here(
+        `${debugPrefix}[queryHashAndRangeBeginsWith]: hashKey=${inspect(rangeKey)}; data=${inspect(
+            data
         )}`
     )
-
-    const data = await all(model, rangeKey, startHashKey, limit)
-    const returnStatus = 200
-
-    debug.here(
-        `${logPrefix}[Consultar]: rangeKey=${inspect(rangeKey)}; startHashKey=${inspect(
-            startHashKey
-        )}; status=${returnStatus}`
-    )
-    debug.here(
-        `${logPrefix}[Consultar]: rangeKey=${inspect(rangeKey)}; startHashKey=${inspect(
-            startHashKey
-        )}; data=${inspect(data)}`
-    )
-
-    return {
-        status: returnStatus,
-        data: {
-            LastKey: data.lastKey ? toLastKey(data.lastKey) : null,
-            Count: data.count,
-            Items: data,
-        },
-    }
+    return data
 }
 
-const queryByHashKeyFactory = (logPrefix, model) => async (hashKey, rangeKey) => {
+const queryHashAndRangeContainsFactory = (debugPrefix, model) => async (
+    hashKey,
+    rangeKeyContains,
+    startAt,
+    limit
+) => {
     debug.here(
-        `${logPrefix}[Consultar Hash Key]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-            rangeKey
+        `${debugPrefix}[queryHashAndRangeContains]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
+            rangeKeyContains
         )}`
     )
+    const checks = withHashAndRangeKey.validate({ hashKey, rangeKey: rangeKeyContains })
 
-    const checks = validate(hashKey, rangeKey)
-
-    if (checks.length) {
-        debug.here(
-            `${logPrefix}[Consultar Hash Key][ERROR]: hashKey=${inspect(
-                hashKey
-            )}; rangeKey=${inspect(rangeKey)}; error=${inspect(checks)}`
-        )
-        return {
-            status: 400,
-            data: checks,
-        }
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
     }
 
-    const data = await model.get({ ...hashKey, ...rangeKey })
-    const returnStatus = 200
+    const fieldHash = Object.keys(hashKey)[0]
+    const valueHash = Object.values(hashKey)[0]
+    const fieldRange = Object.keys(rangeKeyContains)[0]
+    const valueRange = Object.values(rangeKeyContains)[0]
+    const queryRangeKey = model.scan
+        .from(fieldHash)
+        .eq(valueHash)
+        .filter(fieldRange)
+        .contains(valueRange)
+
+    if (startAt != null) {
+        queryRangeKey.startAt(startAt)
+    }
+
+    if (limit != null) {
+        queryRangeKey.limit(limit)
+    }
+
+    const data = await queryRangeKey.exec()
 
     debug.here(
-        `${logPrefix}[Consultar Hash Key]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-            rangeKey
-        )}; status=${returnStatus}`
-    )
-    debug.here(
-        `${logPrefix}[Consultar Hash Key]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-            rangeKey
+        `${debugPrefix}[queryHashAndRangeContains]: hashKey=${inspect(
+            rangeKeyContains
         )}; data=${inspect(data)}`
     )
-
-    if (!data) {
-        return {
-            status: 404,
-            data: {
-                type: 'not_found',
-                message: `${logPrefix}: Not Found hashKey=${inspect(hashKey)}; rangeKey=${inspect(rangeKey)}`,
-            },
-        }
-    }
-
-    return {
-        status: returnStatus,
-        data: {
-            Count: 1,
-            Items: [data],
-        },
-    }
+    return data
 }
 
-const createFactory = (logPrefix, model) => async (hashKey, rangeKey, obj) => {
-    debug.here(`${logPrefix}[Salvar]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(rangeKey)}`)
+const createFactory = (debugPrefix, model) => async (hashKey, rangeKey, obj) => {
     debug.here(
-        `${logPrefix}[Salvar]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
+        `${debugPrefix}[create]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
             rangeKey
         )}; obj=${inspect(obj)}`
     )
+    const checks = withHashAndRangeKey.validate({ hashKey, rangeKey })
 
-    const checks = validate(hashKey, rangeKey)
-
-    if (checks.length) {
-        debug.here(
-            `${logPrefix}[Salvar][ERROR]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-                rangeKey
-            )}; error=${inspect(checks)}`
-        )
-        return {
-            status: 400,
-            data: checks,
-        }
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
     }
 
-    const exists = await model.get({ ...hashKey, ...rangeKey })
+    const id = { ...hashKey, ...rangeKey }
+    const exists = await model.query.getOne(id)
 
-    if (exists) {
-        return {
-            status: 400,
-            data: {
-                type: 'bad_request',
-                message: `${logPrefix}: Already Exists hashKey=${inspect(
-                    hashKey
-                )}; rangeKey=${inspect(rangeKey)}`,
-            },
-        }
+    if (exists != null) {
+        throw newAlreadyExists(debugPrefix, model.name, id)
     }
 
-    const data = await model.create({ ...hashKey, ...rangeKey, ...obj })
-    const returnStatus = 201
+    const data = await model.create({ ...id, ...obj })
 
-    debug.here(
-        `${logPrefix}[Salvar]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-            rangeKey
-        )}; data=${inspect(data)}`
-    )
-    debug.here(
-        `${logPrefix}[Salvar]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-            rangeKey
-        )}; status=${returnStatus}`
-    )
-
-    return {
-        status: returnStatus,
-        data,
-    }
+    debug.here(`${debugPrefix}[create]: id=${inspect(id)}; data=${inspect(data)}`)
+    return data
 }
 
-const updateFactory = (logPrefix, model) => async (hashKey, rangeKey, obj) => {
+const updateFactory = (debugPrefix, model) => async (hashKey, rangeKey, obj) => {
     debug.here(
-        `${logPrefix}[Atualizar]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(rangeKey)}`
-    )
-    debug.here(
-        `${logPrefix}[Atualizar]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
+        `${debugPrefix}[update]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
             rangeKey
         )}; obj=${inspect(obj)}`
     )
+    const checks = withHashAndRangeKey.validate({ hashKey, rangeKey })
 
-    const checks = validate(hashKey, rangeKey)
-    // atributos auto-gerenciaveis (timestamp)
-    delete obj.updatedAt
-    delete obj.createdAt
-
-    if (checks.length) {
-        debug.here(
-            `${logPrefix}[Atualizar][ERROR]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-                rangeKey
-            )}; error=${inspect(checks)}`
-        )
-        return {
-            status: 400,
-            data: checks,
-        }
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
     }
 
-    const data = await model.update({ ...hashKey, ...rangeKey }, obj)
-    const returnStatus = 200
+    const id = { ...hashKey, ...rangeKey }
+    const data = await model.update(id, obj)
 
-    debug.here(
-        `${logPrefix}[Atualizar]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-            rangeKey
-        )}; status=${returnStatus}`
-    )
-    debug.here(
-        `${logPrefix}[Atualizar]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-            rangeKey
-        )}; data=${inspect(data)}`
-    )
-
-    return {
-        status: returnStatus,
-        data,
-    }
+    debug.here(`${debugPrefix}[update]: id=${inspect(id)}; data=${inspect(data)}`)
+    return data
 }
 
-const deleteFactory = (logPrefix, model) => async (hashKey, rangeKey) => {
-    debug.here(`${logPrefix}[Excluir]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(rangeKey)}`)
+const deleteFactory = (debugPrefix, model) => async (hashKey, rangeKey) => {
+    debug.here(`${debugPrefix}[delete]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(rangeKey)}`)
+    const checks = withHashAndRangeKey.validate({ hashKey, rangeKey })
 
-    const checks = validate(hashKey, rangeKey)
-
-    if (checks.length) {
-        debug.here(
-            `${logPrefix}[Excluir][ERROR]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-                rangeKey
-            )}; error=${inspect(checks)}`
-        )
-        return {
-            status: 400,
-            data: checks,
-        }
+    if (checks.error != null) {
+        throw newInvalidInputSchema(debugPrefix, checks.error)
     }
 
-    const data = await model.delete({ ...hashKey, ...rangeKey })
-    const returnStatus = 200
+    const id = { ...hashKey, ...rangeKey }
+    const data = await model.delete(id)
 
-    debug.here(
-        `${logPrefix}[Excluir]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-            rangeKey
-        )}; data=${inspect(data)}`
-    )
-    debug.here(
-        `${logPrefix}[Excluir]: hashKey=${inspect(hashKey)}; rangeKey=${inspect(
-            rangeKey
-        )}; status=${returnStatus}`
-    )
-
-    return {
-        status: returnStatus,
-        data,
-    }
+    debug.here(`${debugPrefix}[delete]: id=${inspect(id)}; data=${inspect(data)}`)
+    return data
 }
 
 module.exports = model => {
-    const logPrefix = `[service][${model.name}]`
+    const debugPrefix = `${APP_PREFIX}[hash-with-range][${model.name}]`
 
     return {
-        create: createFactory(logPrefix, model),
-        delete: deleteFactory(logPrefix, model),
-        update: updateFactory(logPrefix, model),
-        query: queryFactory(logPrefix, model),
-        queryByHashKey: queryByHashKeyFactory(logPrefix, model),
+        create: createFactory(debugPrefix, model),
+        delete: deleteFactory(debugPrefix, model),
+        update: updateFactory(debugPrefix, model),
+        queryOne: queryOneFactory(debugPrefix, model),
+        queryOneOrThrow: queryOneOrThrowFactory(debugPrefix, model),
+        queryHashKey: queryHashKeyFactory(debugPrefix, model),
+        queryRangeKey: queryRangeKeyFactory(debugPrefix, model),
+        queryRangeBeginsWith: queryRangeBeginsWithFactory(debugPrefix, model),
+        queryHashAndRangeBeginsWith: queryHashAndRangeBeginsWithFactory(debugPrefix, model),
+        queryHashAndRangeContains: queryHashAndRangeContainsFactory(debugPrefix, model),
+        queryHashBeginsWith: hashOnly(model).queryHashBeginsWith,
+        queryHashContains: hashOnly(model).queryHashContains,
     }
 }
