@@ -1,11 +1,12 @@
 {
     "name": "fvi-dynamoose-core",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "FVI - Dynamoose Core",
-    "main": "app/index.js",
+    "main": "src/index.js",
     "prettier": "fvi-prettier-config",
     "scripts": {
         "compile": "grunt compile",
+        "build": "grunt compile shell:babel",
         "test": "grunt test",
         "debug-test": "grunt debug-test",
         "dev": "grunt dev",
@@ -31,28 +32,27 @@
     "license": "MIT",
     "homepage": "git+https://github.com/salespaulo/fvi-dynamoose-core.git#README.md",
     "dependencies": {
-        "fvi-node-utils": "^0.0.1"
+        "fvi-node-utils": "^0.0.7"
     },
     "devDependencies": {
         "uuid": "7.0.2",
         "chai": "^4.2.0",
         "chai-http": "^4.3.0",
-        "grunt": "^1.0.4",
+        "@babel/cli": "^7.10.1",
+        "@babel/core": "^7.9.0",
+        "@babel/preset-env": "^7.9.0",
+        "grunt": "^1.3.0",
         "grunt-apidoc": "^0.11.0",
-        "grunt-concurrent": "^3.0.0",
         "grunt-contrib-clean": "^2.0.0",
-        "grunt-contrib-compress": "^1.6.0",
         "grunt-contrib-watch": "^1.1.0",
         "grunt-env": "^1.0.1",
         "grunt-mocha-test": "^0.13.3",
-        "grunt-nodemon": "^0.4.2",
-        "grunt-notify": "^0.4.5",
         "grunt-shell": "^3.0.1",
-        "fvi-koa-server": "^0.0.1",
+        "fvi-koa-server": "^0.0.2",
         "fvi-prettier-config": "^0.0.1",
         "load-grunt-tasks": "^5.0.1",
-        "fvi-dynamoose-utils": "^0.0.2",
-        "fvi-dynamoose-repository": "^0.0.2",
-        "mocha": "^7.1.0"
+        "fvi-dynamoose-utils": "^0.0.4",
+        "fvi-dynamoose-repository": "^0.0.3",
+        "mocha": "^8.1.3"
     }
 }

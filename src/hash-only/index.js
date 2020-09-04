@@ -1,7 +1,7 @@
 'use strict'
 
 const { debug } = require('fvi-node-utils')
-const { inspect } = require('fvi-node-utils/app/objects')
+const { inspect } = require('fvi-node-utils/src/objects')
 
 const { withHashKey } = require('./schema')
 const { APP_PREFIX, newInvalidInputSchema, newNotFoundById, newAlreadyExists } = require('../utils')

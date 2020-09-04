@@ -4,7 +4,7 @@ const uuid = require('uuid')
 const repository = require('fvi-dynamoose-repository')
 const { hashKeyString, requiredString, optionalString } = require('fvi-dynamoose-utils')
 
-const { hashIdFactory } = require('../app')
+const { hashIdFactory } = require('../src')
 const { testQueryOne, testMutations } = require('./utils')
 
 const MODEL_NAME = 'model2'

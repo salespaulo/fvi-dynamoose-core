@@ -10,7 +10,7 @@ const {
     optionalString,
 } = require('fvi-dynamoose-utils')
 
-const { hashWithRangeFactory } = require('../app')
+const { hashWithRangeFactory } = require('../src')
 const { testQueryOne, testQueries, testMutations } = require('./utils')
 
 describe('Testing hash-with-range services', () => {

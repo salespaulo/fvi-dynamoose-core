@@ -1,7 +1,7 @@
+dist/
 *.xls
 *.xlsx
 !mock-msg-pagto.xlsx
-package-lock.json
 *.heapsnapshot
 # App
 .project
