@@ -9,7 +9,7 @@ const {
     optionalString,
 } = require('fvi-dynamoose-utils')
 
-const { hashIdRangeTenantFactory } = require('../app')
+const { hashIdRangeTenantFactory } = require('../src')
 const { testQueryOne, testMutations } = require('./utils')
 
 const MODEL_NAME = 'model3'

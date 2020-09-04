@@ -4,7 +4,7 @@ const chai = require('chai')
 const repository = require('fvi-dynamoose-repository')
 const { hashKeyString, rangeKeyString } = require('fvi-dynamoose-utils')
 
-const app = require('../app')
+const app = require('../src')
 
 const MODEL_NAME = 'model1'
 
