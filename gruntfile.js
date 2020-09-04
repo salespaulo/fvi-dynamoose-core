@@ -14,9 +14,6 @@ module.exports = function (grunt) {
         babel: {
             command: 'babel src --out-dir dist',
         },
-        webpack: {
-            command: 'npx webpack',
-        },
         exec: {
             command: 'node app',
         },
@@ -116,7 +113,7 @@ module.exports = function (grunt) {
     grunt.registerTask('version:minor', ['shell:verminor'])
     grunt.registerTask('version:major', ['shell:vermajor'])
 
-    grunt.registerTask('build', ['shell:babel', 'shell:webpack'])
+    grunt.registerTask('build', ['shell:babel'])
     grunt.registerTask('deploy', ['test', 'build', 'shell:deploy'])
 
     grunt.registerTask('release', ['test', 'build', 'shell:gitflowrelease'])
